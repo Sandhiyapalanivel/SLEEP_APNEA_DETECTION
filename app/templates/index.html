@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SleepScan - AI Sleep Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #2c2c54, #474787);
+    color: #fff;
+    text-align: center;
+}
+header {
+    padding: 20px 0;
+}
+h1 {
+    font-size: 3rem;
+    margin: 20px 0 10px;
+}
+p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+}
+button {
+    padding: 12px 25px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    background-color: #9b59b6;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.3s;
+}
+button:hover {
+    background-color: #8e44ad;
+}
+.result, .diet {
+    margin-top: 25px;
+    padding: 15px;
+    border-radius: 10px;
+    display: inline-block;
+}
+.result.normal { background: #2ecc71; color: #fff; }
+.result.mild { background: #f1c40f; color: #000; }
+.result.severe { background: #e74c3c; color: #fff; }
+.diet { font-size: 1rem; max-width: 500px; text-align: center; }
+#audio-player { margin-top: 20px; }
+#loading { display: none; margin-top: 20px; font-size: 1.2rem; }
+</style>
+</head>
+<body>
+<header>
+    <h1>SleepScan</h1>
+    <p>Detect Sleep Apnea From Your Voice</p>
+</header>
+
+<form id="upload-form" method="POST" enctype="multipart/form-data">
+    <input type="file" name="audio_file" accept=".wav,.mp3" required>
+    <br><br>
+    <button type="submit">Analyze My Sleep</button>
+</form>
+
+<div id="loading">⏳ Processing audio...</div>
+<div id="result" class="result"></div>
+<div id="diet" class="diet"></div>
+<audio id="audio-player" controls style="display:none;"></audio>
+
+<script>
+const form = document.getElementById('upload-form');
+const loading = document.getElementById('loading');
+const resultDiv = document.getElementById('result');
+const dietDiv = document.getElementById('diet');
+const audioPlayer = document.getElementById('audio-player');
+
+form.addEventListener('submit', function(e){
+    e.preventDefault();
+    loading.style.display = 'block';
+    resultDiv.innerHTML = '';
+    dietDiv.innerHTML = '';
+    audioPlayer.style.display = 'none';
+
+    const formData = new FormData(form);
+
+    fetch("/", { method: "POST", body: formData })
+        .then(response => response.text())
+        .then(html => {
+            loading.style.display = 'none';
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const resultText = doc.getElementById('result-text').innerText;
+            const dietText = doc.getElementById('diet-text').innerText;
+            const audioSrc = doc.getElementById('uploaded-audio').getAttribute('src');
+
+            let colorClass = 'normal';
+            if(resultText.includes("Mild")) colorClass = 'mild';
+            if(resultText.includes("Severe")) colorClass = 'severe';
+
+            resultDiv.innerText = resultText;
+            resultDiv.className = `result ${colorClass}`;
+
+            dietDiv.innerText = dietText;
+            audioPlayer.src = audioSrc;
+            audioPlayer.style.display = 'block';
+        })
+        .catch(err => {
+            loading.style.display = 'none';
+            resultDiv.innerText = "Error processing audio!";
+            resultDiv.className = 'result severe';
+            console.error(err);
+        });
+});
+</script>
+</body>
+</html>

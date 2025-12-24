@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# ML model files
+*.h5
+*.pkl
+*.npy
+
+# Dataset files
+data/
+*.csv
+*.zip
+
+# Environment
+.env
